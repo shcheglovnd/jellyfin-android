@@ -62,6 +62,8 @@ android {
 
     buildTypes {
         getByName("release") {
+            // local build: installs next to the Play Store app instead of replacing it
+            applicationIdSuffix = ".sw"
             isMinifyEnabled = true
             isShrinkResources = true
 
