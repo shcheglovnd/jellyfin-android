@@ -93,6 +93,7 @@ import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("TooManyFunctions")
 class PlayerViewModel(application: Application) : AndroidViewModel(application), KoinComponent, Player.Listener {
@@ -784,7 +785,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application),
             queueManager.tryRestartPlayback()
         } else {
             Timber.w(error, "Playback error, attempting fallback")
-            val startPosition = (playerOrNull?.currentPosition ?: 0L).milliseconds
+            // Jellyfin SW: an error before playback really started leaves currentPosition at 0 (an
+            // early seek to the resume point may also have been dropped). Retrying from 0 would
+            // throw away the resume position, so fall back to the position that was requested.
+            val currentPosition = (playerOrNull?.currentPosition ?: 0L).milliseconds
+            val requestedStart = mediaSourceOrNull?.startTime ?: Duration.ZERO
+            val startPosition = if (currentPosition < 1.seconds) requestedStart else currentPosition
             fallbackRetryJob?.cancel()
             fallbackRetryJob = viewModelScope.launch {
                 val retried = queueManager.restartPlaybackWithFallback(startPosition)
