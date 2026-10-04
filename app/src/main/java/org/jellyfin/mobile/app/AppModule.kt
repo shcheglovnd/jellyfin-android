@@ -34,6 +34,7 @@ import org.jellyfin.mobile.downloads.DownloadQueue
 import org.jellyfin.mobile.downloads.DownloadsViewModel
 import org.jellyfin.mobile.downloads.FileDownloader
 import org.jellyfin.mobile.events.ActivityEventHandler
+import org.jellyfin.mobile.player.mkv.PatchedMatroskaExtractorsFactory
 import org.jellyfin.mobile.player.deviceprofile.DeviceProfileBuilder
 import org.jellyfin.mobile.player.interaction.PlayerEvent
 import org.jellyfin.mobile.player.mediasegments.MediaSegmentRepository
@@ -166,7 +167,8 @@ val applicationModule = module {
                 },
             )
         }
-        DefaultMediaSourceFactory(get<CacheDataSource.Factory>(), extractorsFactory)
+        // Jellyfin SW: patched Matroska extractor (finds Cues behind a nested SeekHead)
+        DefaultMediaSourceFactory(get<CacheDataSource.Factory>(), PatchedMatroskaExtractorsFactory(extractorsFactory))
     }
 
     single(createdAtStart = true) { StorageManager(get(), get()) }
